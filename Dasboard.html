@@ -1,1 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Gradient Studio</title>
+	<style>
+		:root { color-scheme: dark; --bg: #101117; --panel: #191a23; --text: #f5f4fb; --muted: #9c9baa; --line: #2b2c37; --accent: #c6f36b; }
+		* { box-sizing: border-box; }
+		body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% -20%, #28273a 0, var(--bg) 55%); color: var(--text); font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+		button, input { font: inherit; }
+		.shell { max-width: 1080px; margin: auto; padding: 34px 24px 56px; }
+		header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+		.brand { display: flex; gap: 11px; align-items: center; font-weight: 700; letter-spacing: -.03em; }
+		.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; background: var(--accent); color: #14150f; border-radius: 10px; font-size: 19px; }
+		.status { color: var(--muted); font-size: 13px; }
+		.eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .15em; font-size: 11px; font-weight: 700; }
+		h1 { font-size: clamp(36px, 6vw, 58px); letter-spacing: -.065em; line-height: 1.03; margin: 12px 0; }
+		.intro { color: var(--muted); margin: 0 0 30px; }
+		.workspace { display: grid; grid-template-columns: 1.35fr .85fr; gap: 18px; }
+		.preview-card, .controls { border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 90%, transparent); border-radius: 18px; padding: 16px; }
+		.preview { min-height: 380px; height: min(52vw, 470px); border-radius: 12px; background: linear-gradient(135deg, #f7a8c4, #8b75f5); position: relative; overflow: hidden; transition: background .25s ease; }
+		.preview::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, #00000018); pointer-events: none; }
+		.preview-label { position: absolute; bottom: 17px; left: 18px; z-index: 1; background: #101117b8; color: white; border: 1px solid #ffffff32; border-radius: 8px; padding: 7px 10px; font-size: 12px; backdrop-filter: blur(8px); }
+		.preview-footer { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 15px 3px 1px; color: var(--muted); font-size: 12px; }
+		.controls { padding: 22px; }
+		.controls h2 { font-size: 17px; margin: 0 0 4px; letter-spacing: -.02em; }
+		.subtext { color: var(--muted); font-size: 13px; margin: 0 0 22px; }
+		.color-row { display: grid; grid-template-columns: 1fr 54px; gap: 8px; align-items: center; margin: 14px 0; }
+		.color-row label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+		.hex-input { width: 100%; background: #111219; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; outline: none; text-transform: uppercase; }
+		.hex-input:focus { border-color: var(--accent); }
+		input[type="color"] { width: 54px; height: 39px; border: 1px solid var(--line); border-radius: 8px; background: #111219; padding: 4px; cursor: pointer; }
+		.range-row { margin: 22px 0 19px; }
+		.range-head { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+		input[type="range"] { accent-color: var(--accent); width: 100%; cursor: pointer; }
+		.actions { display: flex; gap: 9px; margin-top: 23px; }
+		button { border: 0; border-radius: 9px; padding: 10px 13px; cursor: pointer; font-weight: 650; transition: transform .15s, opacity .15s; }
+		button:hover { transform: translateY(-1px); } button:active { transform: translateY(0); }
+		.primary { background: var(--accent); color: #171a0e; flex: 1; }
+		.secondary { color: var(--text); background: #252631; border: 1px solid #343541; }
+		.code-box { margin-top: 17px; background: #111219; border: 1px solid var(--line); border-radius: 9px; padding: 11px 12px; color: #c4c2d2; font: 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+		.code-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; color: var(--muted); font: 11px ui-sans-serif, system-ui; }
+		.copy { color: var(--accent); background: none; padding: 2px 0; font-size: 11px; }
+		.hint { margin-top: 20px; color: var(--muted); font-size: 12px; }
+		.toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 15px); opacity: 0; background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; pointer-events: none; transition: .2s; }
+		.toast.show { transform: translate(-50%, 0); opacity: 1; }
+		@media (max-width: 760px) { .shell { padding: 24px 16px 40px; } header { margin-bottom: 35px; } .workspace { grid-template-columns: 1fr; } .preview { min-height: 290px; height: 65vw; } .status { display: none; } }
+	</style>
+</head>
+<body>
+	<main class="shell">
+		<header>
+			<div class="brand"><span class="brand-mark">✳</span> gradient studio</div>
+			<div class="status">A tiny playground for colorful ideas</div>
+		</header>
+		<div class="eyebrow">Design tool · 01</div>
+		<h1>Find your next<br>favorite gradient.</h1>
+		<p class="intro">Mix two colors, fine-tune the angle, and take your CSS with you.</p>
+
+		<section class="workspace" aria-label="Gradient editor">
+			<div class="preview-card">
+				<div class="preview" id="preview"><span class="preview-label">Your gradient, in real time</span></div>
+				<div class="preview-footer"><span>LIVE PREVIEW</span><span id="previewAngle">135° angle</span></div>
+			</div>
+			<aside class="controls">
+				<h2>Make it yours</h2>
+				<p class="subtext">Pick a pair and see what happens.</p>
+				<div class="color-row">
+					<div><label for="hex1">Color one</label><input class="hex-input" id="hex1" value="#F7A8C4" maxlength="7" aria-label="First color hex value"></div>
+					<input type="color" id="picker1" value="#f7a8c4" aria-label="Pick first color">
+				</div>
+				<div class="color-row">
+					<div><label for="hex2">Color two</label><input class="hex-input" id="hex2" value="#8B75F5" maxlength="7" aria-label="Second color hex value"></div>
+					<input type="color" id="picker2" value="#8b75f5" aria-label="Pick second color">
+				</div>
+				<div class="range-row">
+					<div class="range-head"><label for="angle">Direction</label><span id="angleValue">135°</span></div>
+					<input type="range" id="angle" min="0" max="360" value="135">
+				</div>
+				<div class="actions"><button class="primary" id="randomize">✦ Surprise me</button><button class="secondary" id="reset">Reset</button></div>
+				<div class="code-box"><div class="code-top"><span>CSS</span><button class="copy" id="copy">Copy code</button></div><code id="cssCode"></code></div>
+				<div class="hint">Tip: try a bold color pair, then drag the direction slider.</div>
+			</aside>
+		</section>
+	</main>
+	<div class="toast" id="toast" role="status">CSS copied to clipboard</div>
+	<script>
+		const defaults = { first: '#F7A8C4', second: '#8B75F5', angle: 135 };
+		const hex1 = document.querySelector('#hex1'), hex2 = document.querySelector('#hex2');
+		const picker1 = document.querySelector('#picker1'), picker2 = document.querySelector('#picker2');
+		const angle = document.querySelector('#angle');
+		const validHex = value => /^#[0-9a-f]{6}$/i.test(value);
+
+		function update() {
+			const a = hex1.value, b = hex2.value, deg = angle.value;
+			if (validHex(a) && validHex(b)) {
+				picker1.value = a; picker2.value = b;
+				document.querySelector('#preview').style.background = `linear-gradient(${deg}deg, ${a}, ${b})`;
+				document.querySelector('#cssCode').textContent = `background: linear-gradient(${deg}deg, ${a.toLowerCase()}, ${b.toLowerCase()});`;
+			}
+			document.querySelector('#angleValue').textContent = `${deg}°`;
+			document.querySelector('#previewAngle').textContent = `${deg}° angle`;
+		}
+		[[hex1, picker1], [hex2, picker2]].forEach(([text, picker]) => {
+			picker.addEventListener('input', () => { text.value = picker.value.toUpperCase(); update(); });
+			text.addEventListener('input', update);
+			text.addEventListener('blur', () => { if (!validHex(text.value)) text.value = picker.value.toUpperCase(); update(); });
+		});
+		angle.addEventListener('input', update);
+		document.querySelector('#randomize').addEventListener('click', () => {
+			const color = () => `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase()}`;
+			hex1.value = color(); hex2.value = color(); angle.value = Math.floor(Math.random() * 361); update();
+		});
+		document.querySelector('#reset').addEventListener('click', () => {
+			hex1.value = defaults.first; hex2.value = defaults.second; angle.value = defaults.angle; update();
+		});
+		document.querySelector('#copy').addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(document.querySelector('#cssCode').textContent);
+				const toast = document.querySelector('#toast'); toast.classList.add('show');
+				setTimeout(() => toast.classList.remove('show'), 1800);
+			} catch { document.querySelector('#cssCode').parentElement.title = 'Select and copy the CSS manually'; }
+		});
+		update();
+	</script>
+	<script>
+	(() => {
+		const style = document.createElement('style');
+		style.textContent = `
+			:root{color-scheme:dark;--ch-bg:#0d1117;--ch-panel:#151c25;--ch-line:#283543;--ch-text:#edf3f7;--ch-muted:#91a0ad;--ch-accent:#a8e6cf;--light:#e6edf0;--dark:#668c83}
+			body{background:radial-gradient(ellipse at 50% -18%,#203d40 0,var(--ch-bg) 58%);color:var(--ch-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+			.chess-shell{max-width:1120px;margin:auto;padding:28px 22px 48px}.chess-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:35px}.chess-brand{display:flex;align-items:center;gap:12px;font-weight:750;letter-spacing:-.04em;font-size:18px}.chess-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:var(--ch-accent);color:#10221d;font-size:23px}.chess-tag{color:var(--ch-muted);font-size:13px}.chess-heading{margin-bottom:24px}.chess-kicker{color:var(--ch-accent);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:750}.chess-heading h1{font-size:clamp(34px,5vw,52px);letter-spacing:-.06em;line-height:1.04;margin:9px 0}.chess-heading p{color:var(--ch-muted);margin:0}.chess-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(270px,.72fr);gap:18px;align-items:start}.board-card,.side-card{border:1px solid var(--ch-line);background:#151c25eF;border-radius:18px;padding:17px;box-shadow:0 18px 55px #0003}.player-line{display:flex;align-items:center;gap:10px;padding:2px 3px 13px;color:var(--ch-muted);font-size:13px}.player-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#27333d;color:#eef6f4;font-size:15px}.player-line strong{color:var(--ch-text);font-weight:650}.player-line .taken{margin-left:auto;letter-spacing:1px;color:#d4dfe2;min-height:1em}.board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;border:5px solid #253039;border-radius:7px;overflow:hidden;position:relative}.square{border:0;border-radius:0;padding:0;position:relative;display:grid;place-items:center;aspect-ratio:1;cursor:pointer;transition:filter .12s,box-shadow .12s}.square.light{background:var(--light)}.square.dark{background:var(--dark)}.square:hover{filter:brightness(1.09)}.square.selected{box-shadow:inset 0 0 0 4px #a8e6cf}.square.last::before{content:"";position:absolute;inset:0;background:#f4df7460}.piece{position:relative;z-index:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2",serif;font-size:clamp(27px,6.1vw,64px);line-height:1;filter:drop-shadow(0 2px 1px #0004);user-select:none}.piece.white{color:#fffdf1;text-shadow:0 1px 2px #17242c,1px 0 #53616a,-1px 0 #53616a,0 -1px #53616a}.piece.black{color:#172126;text-shadow:0 1px 1px #ffffff95}.square.legal::after{content:"";position:absolute;width:24%;height:24%;border-radius:50%;background:#21363072;z-index:2}.square.capture::after{content:"";position:absolute;inset:5px;border:4px solid #d5efbb9c;border-radius:50%;z-index:2}.coord{position:absolute;z-index:3;left:4px;top:2px;font:10px ui-sans-serif,system-ui;opacity:.72}.light .coord{color:#526a68}.dark .coord{color:#eff5e9}.board-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 3px 1px;color:var(--ch-muted);font-size:12px}.side-card{padding:21px}.side-card h2{font-size:17px;margin:0 0 4px;letter-spacing:-.02em}.side-sub{margin:0 0 17px;font-size:13px;color:var(--ch-muted)}.turn-status{display:flex;gap:11px;align-items:center;background:#10171e;border:1px solid var(--ch-line);border-radius:11px;padding:12px;margin:18px 0}.turn-icon{display:grid;place-items:center;width:34px;height:34px;background:#24363a;border-radius:10px;font-size:20px}.turn-status strong{display:block;font-size:13px}.turn-status small{display:block;color:var(--ch-muted);font-size:11px;margin-top:2px}.chess-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.chess-btn{border:1px solid #34434c;border-radius:9px;padding:10px 12px;color:var(--ch-text);background:#222c35;font-weight:650;cursor:pointer;transition:transform .15s,background .15s}.chess-btn:hover{transform:translateY(-1px);background:#2b3842}.chess-btn.main{background:var(--ch-accent);color:#10221d;border-color:transparent}.chess-btn:disabled{opacity:.42;cursor:not-allowed;transform:none}.move-title{display:flex;justify-content:space-between;margin:22px 0 8px;font-size:12px;color:var(--ch-muted)}.move-list{height:170px;overflow:auto;background:#10171e;border:1px solid var(--ch-line);border-radius:9px;padding:7px 10px}.move-row{display:grid;grid-template-columns:34px 1fr 1fr;padding:5px 2px;font:12px ui-monospace,monospace;color:#dce7e9}.move-row:nth-child(odd){background:#ffffff05}.move-num{color:var(--ch-muted)}.chess-help{margin:14px 0 0;color:var(--ch-muted);font-size:11px;line-height:1.6}.check-text{color:#ffb4a9!important}.chess-board-wrap{max-width:650px;margin:auto}
+			@media(max-width:760px){.chess-shell{padding:20px 14px 32px}.chess-top{margin-bottom:25px}.chess-tag{display:none}.chess-layout{grid-template-columns:1fr}.board-card{padding:11px}.side-card{padding:17px}.piece{font-size:clamp(28px,10vw,58px)}.chess-board-wrap{max-width:560px}}
+			@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+		`;
+		document.head.append(style);
+		document.body.innerHTML = `<main class="chess-shell"><header class="chess-top"><div class="chess-brand"><span class="chess-mark">♞</span> Checkmate Club</div><div class="chess-tag">A thoughtful little game of chess</div></header><section class="chess-heading"><div class="chess-kicker">The classic · two players</div><h1>Your next move.</h1><p>A calm place to play a game, one thoughtful move at a time.</p></section><section class="chess-layout" aria-label="Chess game"><div class="board-card"><div class="chess-board-wrap"><div class="player-line"><span class="player-dot">♚</span><strong>Black</strong><span id="takenBlack" class="taken"></span></div><div id="board" class="board" role="grid" aria-label="Chess board"></div><div class="player-line" style="padding:13px 3px 2px"><span class="player-dot">♔</span><strong>White</strong><span id="takenWhite" class="taken"></span></div></div><div class="board-footer"><span>LOCAL GAME · PASS AND PLAY</span><span id="moveCount">Move 1</span></div></div><aside class="side-card"><h2>Game room</h2><p class="side-sub">White moves first. Select a piece, then its destination.</p><div class="turn-status"><span id="turnIcon" class="turn-icon">♔</span><div><strong id="statusTitle">White to move</strong><small id="statusDetail">Choose one of your pieces.</small></div></div><div class="chess-actions"><button class="chess-btn" id="undoMove">↶ &nbsp;Undo</button><button class="chess-btn main" id="newGame">New game</button></div><div class="move-title"><span>MOVE HISTORY</span><span id="moveTotal">0 moves</span></div><div id="moveList" class="move-list" aria-live="polite"></div><p class="chess-help">Standard chess rules apply, including castling, en passant, and automatic queen promotion. Undo takes back one full turn when possible.</p></aside></section></main>`;
+		const glyph={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+		const files='abcdefgh';
+		let game,selected=null,targets=[],history=[],moves=[],lastMove=null;
+		const initial=()=>({board:['r','n','b','q','k','b','n','r','p','p','p','p','p','p','p','p',...Array(32).fill(null),'P','P','P','P','P','P','P','P','R','N','B','Q','K','B','N','R'],white:true,rights:{K:true,Q:true,k:true,q:true},ep:null});
+		const color=p=>p!==null&&p===p.toUpperCase();
+		const inside=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
+		function attacked(sq,byWhite,s=game){const r=sq>>3,c=sq&7,b=s.board, pawn=byWhite?'P':'p',pr=byWhite?r+1:r-1;for(const dc of [-1,1])if(inside(pr,c+dc)&&b[pr*8+c+dc]===pawn)return true;for(const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){const rr=r+dr,cc=c+dc;if(inside(rr,cc)&&b[rr*8+cc]===(byWhite?'N':'n'))return true}for(const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){let rr=r+dr,cc=c+dc,step=1;while(inside(rr,cc)){const p=b[rr*8+cc];if(p){if(color(p)===byWhite&&(p.toLowerCase()==='q'||(step===1&&p.toLowerCase()==='k')||(dr===0||dc===0?p.toLowerCase()==='r':p.toLowerCase()==='b')))return true;break}rr+=dr;cc+=dc;step++}}return false}
+		function inCheck(white,s=game){const king=s.board.indexOf(white?'K':'k');return king<0||attacked(king,!white,s)}
+		function apply(m,s){const b=s.board,p=b[m.from],captured=m.ep?b[m.to+(color(p)?8:-8)]:b[m.to];b[m.from]=null;if(m.ep)b[m.to+(color(p)?8:-8)]=null;b[m.to]=m.promo||p;if(p.toLowerCase()==='k'){if(color(p)){s.rights.K=false;s.rights.Q=false}else{s.rights.k=false;s.rights.q=false}if(m.castle){const row=color(p)?7:0,rookFrom=row*8+(m.to>m.from?7:0),rookTo=row*8+(m.to>m.from?5:3);b[rookTo]=b[rookFrom];b[rookFrom]=null}}if(p.toLowerCase()==='r'){if(m.from===0)s.rights.q=false;if(m.from===7)s.rights.k=false;if(m.from===56)s.rights.Q=false;if(m.from===63)s.rights.K=false}if(captured&&captured.toLowerCase()==='r'){if(m.to===0)s.rights.q=false;if(m.to===7)s.rights.k=false;if(m.to===56)s.rights.Q=false;if(m.to===63)s.rights.K=false}s.ep=null;if(p.toLowerCase()==='p'&&Math.abs(m.to-m.from)===16)s.ep=(m.from+m.to)>>1;s.white=!s.white;return captured}
+		function pseudo(from,s=game){const b=s.board,p=b[from],white=color(p),type=p.toLowerCase(),r=from>>3,c=from&7,out=[],add=(rr,cc,extra={})=>{if(!inside(rr,cc))return false;const to=rr*8+cc,q=b[to];if(q&&color(q)===white)return false;if(q&&q.toLowerCase()==='k')return false;out.push({from,to,...extra});return !q};if(type==='p'){const d=white?-1:1,start=white?6:1,promo=white?0:7;if(inside(r+d,c)&&!b[(r+d)*8+c]){add(r+d,c,r+d===promo?{promo:white?'Q':'q'}:{});if(r===start&&!b[(r+2*d)*8+c])add(r+2*d,c)}for(const dc of [-1,1])if(inside(r+d,c+dc)){const to=(r+d)*8+c+dc;if(b[to]&&color(b[to])!==white)add(r+d,c+dc,r+d===promo?{promo:white?'Q':'q'}:{});else if(to===s.ep)out.push({from,to,ep:true})}}else if(type==='n'){for(const [dr,dc]of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])add(r+dr,c+dc)}else if(type==='k'){for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)if(dr||dc)add(r+dr,c+dc);const row=white?7:0,kingSide=white?'K':'k',queenSide=white?'Q':'q';if(from===row*8+4&&!inCheck(white,s)){if(s.rights[kingSide]&&!b[row*8+5]&&!b[row*8+6]&&b[row*8+7]===(white?'R':'r')&&!attacked(row*8+5,!white,s)&&!attacked(row*8+6,!white,s))out.push({from,to:row*8+6,castle:true});if(s.rights[queenSide]&&!b[row*8+1]&&!b[row*8+2]&&!b[row*8+3]&&b[row*8] ===(white?'R':'r')&&!attacked(row*8+3,!white,s)&&!attacked(row*8+2,!white,s))out.push({from,to:row*8+2,castle:true})}}else{const dirs=[];if(type==='b'||type==='q')dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);if(type==='r'||type==='q')dirs.push([-1,0],[1,0],[0,-1],[0,1]);for(const[dr,dc]of dirs){let rr=r+dr,cc=c+dc;while(inside(rr,cc)){if(!add(rr,cc))break;rr+=dr;cc+=dc}}}return out}
+		function legal(from,s=game){const p=s.board[from];if(!p||color(p)!==s.white)return[];return pseudo(from,s).filter(m=>{const test={...s,board:s.board.slice(),rights:{...s.rights}};apply({...m},test);return !inCheck(!test.white,test)})}
+		const squareName=i=>files[i&7]+(8-(i>>3));
+		function render(){const el=document.querySelector('#board');el.innerHTML='';for(let i=0;i<64;i++){const r=i>>3,c=i&7,p=game.board[i],sq=document.createElement('button');sq.type='button';sq.className='square '+((r+c)%2?'dark':'light');sq.setAttribute('role','gridcell');sq.setAttribute('aria-label',`${squareName(i)}${p?' '+(color(p)?'white ':'black ')+p.toLowerCase():''}`);if(lastMove&&(i===lastMove.from||i===lastMove.to))sq.classList.add('last');if(selected===i)sq.classList.add('selected');if(targets.some(m=>m.to===i))sq.classList.add(p?'capture':'legal');if(c===0)sq.insertAdjacentHTML('beforeend',`<span class="coord">${8-r}</span>`);if(r===7)sq.insertAdjacentHTML('beforeend',`<span class="coord" style="left:auto;right:4px;top:auto;bottom:2px">${files[c]}</span>`);if(p)sq.insertAdjacentHTML('beforeend',`<span class="piece ${color(p)?'white':'black'}">${glyph[p]}</span>`);sq.addEventListener('click',()=>clickSquare(i));el.append(sq)}const checked=inCheck(game.white),ended=gameOver();const title=document.querySelector('#statusTitle'),detail=document.querySelector('#statusDetail');title.classList.toggle('check-text',checked);document.querySelector('#turnIcon').textContent=game.white?'♔':'♚';if(ended){title.textContent=checked?`${game.white?'White':'Black'} is checkmated`:'Draw — stalemate';detail.textContent=checked?`${game.white?'Black':'White'} wins the game.`:'No legal moves remain.'}else{title.textContent=`${game.white?'White':'Black'} to move`;detail.textContent=checked?'Check! Protect your king.':'Choose one of your pieces.'}document.querySelector('#moveCount').textContent=`Move ${Math.floor(moves.length/2)+1}`;document.querySelector('#moveTotal').textContent=`${moves.length} ${moves.length===1?'move':'moves'}`;document.querySelector('#undoMove').disabled=!history.length;renderMoves();renderTaken()}
+		function gameOver(){return !Array.from({length:64},(_,i)=>i).some(i=>game.board[i]&&color(game.board[i])===game.white&&legal(i).length)}
+		function clickSquare(i){if(gameOver())return;const p=game.board[i];if(selected!==null){const m=targets.find(x=>x.to===i);if(m){history.push({game:JSON.parse(JSON.stringify(game)),moves:moves.slice(),lastMove});const moving=game.board[m.from],captured=apply(m,game);lastMove={from:m.from,to:m.to};const piece=moving.toLowerCase()==='p'&&m.promo?'Q':moving.toUpperCase();let notation=`${piece==='P'?'':piece}${squareName(m.from)}${captured?'x':'–'}${squareName(m.to)}${m.castle?(m.to>m.from?' (O-O)':' (O-O-O)'):''}${m.promo?'=Q':''}`;moves.push(notation);selected=null;targets=[];render();return}}if(p&&color(p)===game.white){selected=i;targets=legal(i)}else{selected=null;targets=[]}render()}
+		function renderMoves(){const el=document.querySelector('#moveList');el.innerHTML='';for(let i=0;i<moves.length;i+=2){const row=document.createElement('div');row.className='move-row';row.innerHTML=`<span class="move-num">${i/2+1}.</span><span>${moves[i]||''}</span><span>${moves[i+1]||''}</span>`;el.append(row)}el.scrollTop=el.scrollHeight}
+		function renderTaken(){const initialCount={P:8,N:2,B:2,R:2,Q:1,p:8,n:2,b:2,r:2,q:1};for(const [id,white]of [['takenWhite',true],['takenBlack',false]]){const captured=[];for(const p of game.board)if(p&&color(p)!==white&&p.toLowerCase()!=='k')initialCount[p]--;for(const [p,n]of Object.entries(initialCount))if((white?color(p):!color(p))&&n>0)for(let k=0;k<n;k++)captured.push(glyph[p]);document.querySelector('#'+id).textContent=captured.join(' ');initialCount={P:8,N:2,B:2,R:2,Q:1,p:8,n:2,b:2,r:2,q:1}}}
+		document.querySelector('#undoMove').addEventListener('click',()=>{if(!history.length)return;const snap=history.pop();game=snap.game;moves=snap.moves;lastMove=snap.lastMove;selected=null;targets=[];render()});
+		document.querySelector('#newGame').addEventListener('click',()=>{if(moves.length&&!confirm('Start a new game? The current game will be lost.'))return;game=initial();selected=null;targets=[];history=[];moves=[];lastMove=null;render()});
+		game=initial();render();
+	})();
+	</script>
+</body>
+</html>
 
